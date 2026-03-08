@@ -1,0 +1,222 @@
+@import "../styles/globals.css";
+
+@layer base {
+  :root {
+    @apply font-mono antialiased;
+  }
+
+  body {
+    @apply min-w-[320px] min-h-screen m-0 bg-background text-foreground;
+  }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #09090b; }
+::-webkit-scrollbar-thumb { background: #3a3a3a; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* ─── Selection ─── */
+::selection {
+  background: rgba(245, 158, 63, 0.35);
+  color: #fff;
+}
+
+/* ─── Heat grid cell ─── */
+.heat-cell {
+  width: 10px;
+  height: 10px;
+  transition: background-color 0.4s ease, opacity 0.4s ease, transform 0.3s ease;
+}
+.heat-cell:hover {
+  transform: scale(1.4);
+  opacity: 1 !important;
+}
+
+/* ─── Glow effects ─── */
+.glow-amber {
+  text-shadow: 0 0 24px rgba(245, 158, 63, 0.6), 0 0 60px rgba(245, 158, 63, 0.2);
+}
+.glow-green {
+  text-shadow: 0 0 20px rgba(110, 231, 183, 0.5), 0 0 50px rgba(110, 231, 183, 0.15);
+}
+.glow-red {
+  text-shadow: 0 0 20px rgba(239, 68, 68, 0.5), 0 0 50px rgba(239, 68, 68, 0.15);
+}
+
+/* ─── Terminal cursor blink ─── */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: "█";
+  animation: blink 1s step-end infinite;
+  color: #f59e3f;
+  margin-left: 2px;
+}
+
+/* ─── Staggered entrance ─── */
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim-stagger > * {
+  opacity: 0;
+  animation: fade-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.anim-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.anim-stagger > *:nth-child(2) { animation-delay: 0.12s; }
+.anim-stagger > *:nth-child(3) { animation-delay: 0.19s; }
+.anim-stagger > *:nth-child(4) { animation-delay: 0.26s; }
+.anim-stagger > *:nth-child(5) { animation-delay: 0.33s; }
+.anim-stagger > *:nth-child(6) { animation-delay: 0.40s; }
+.anim-stagger > *:nth-child(7) { animation-delay: 0.47s; }
+.anim-stagger > *:nth-child(8) { animation-delay: 0.54s; }
+.anim-stagger > *:nth-child(9) { animation-delay: 0.61s; }
+.anim-stagger > *:nth-child(10) { animation-delay: 0.68s; }
+
+/* ─── Bar fill animation ─── */
+@keyframes bar-fill {
+  from { width: 0; }
+}
+.anim-bar-fill {
+  animation: bar-fill 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Score reveal ─── */
+@keyframes score-pop {
+  0%   { opacity: 0; transform: scale(0.5); filter: blur(8px); }
+  60%  { opacity: 1; transform: scale(1.08); filter: blur(0); }
+  100% { transform: scale(1); filter: blur(0); }
+}
+.anim-score-pop {
+  animation: score-pop 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Card entrance ─── */
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.anim-card-enter {
+  opacity: 0;
+  animation: card-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Shimmer for loading ─── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.anim-shimmer {
+  background: linear-gradient(90deg, #1c1c1f 25%, #2a2a2e 50%, #1c1c1f 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ─── Pulse ring for loading ─── */
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  50%  { transform: scale(1.2); opacity: 0; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+.anim-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ─── Floating dots ─── */
+@keyframes float-drift {
+  0%, 100% { transform: translate(0, 0); opacity: var(--dot-opacity); }
+  25%      { transform: translate(3px, -6px); }
+  50%      { transform: translate(-2px, -10px); opacity: calc(var(--dot-opacity) * 0.6); }
+  75%      { transform: translate(4px, -4px); }
+}
+.anim-float {
+  animation: float-drift var(--float-dur, 8s) ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+
+/* ─── Glow pulse on cards ─── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(245, 158, 63, 0); }
+  50%      { box-shadow: 0 0 20px rgba(245, 158, 63, 0.08); }
+}
+.hover-glow:hover {
+  animation: glow-pulse 2s ease-in-out infinite;
+  border-color: #3a3a3a !important;
+}
+
+/* ─── Scan line overlay ─── */
+@keyframes scan {
+  0%   { top: -4px; }
+  100% { top: 100%; }
+}
+.scan-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 63, 0.15), transparent);
+  animation: scan 3s linear infinite;
+  pointer-events: none;
+}
+
+/* ─── Tab underline animation ─── */
+@keyframes tab-underline {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* ─── Hero title animation ─── */
+@keyframes hero-reveal {
+  0%   { opacity: 0; letter-spacing: 0.5em; filter: blur(6px); }
+  100% { opacity: 1; letter-spacing: normal; filter: blur(0); }
+}
+.anim-hero-title {
+  animation: hero-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes hero-sub-reveal {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.anim-hero-sub {
+  opacity: 0;
+  animation: hero-sub-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+}
+
+@keyframes hero-input-reveal {
+  0%   { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.anim-hero-input {
+  opacity: 0;
+  animation: hero-input-reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
+}
+
+/* ─── Check item entrance ─── */
+@keyframes check-slide {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ─── Border glow on focus ─── */
+@keyframes border-glow {
+  0%, 100% { border-color: #f59e3f; box-shadow: 0 0 0 rgba(245, 158, 63, 0); }
+  50%      { border-color: #f59e3f; box-shadow: 0 0 12px rgba(245, 158, 63, 0.2); }
+}
+input:focus-visible {
+  animation: border-glow 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion) {
+  *, ::before, ::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .anim-stagger > * { opacity: 1 !important; }
+  .anim-card-enter { opacity: 1 !important; }
+  .anim-hero-sub, .anim-hero-input { opacity: 1 !important; }
+}
