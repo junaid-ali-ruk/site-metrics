@@ -218,7 +218,7 @@ function ScoreCard({ score, label, icon: Icon, delay = 0 }: { score: number; lab
     >
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] sm:text-[11px] tracking-[0.15em] uppercase text-[#999]">{label}</span>
-        <Icon className="size-3.5 text-[#555] group-hover:text-[#f59e3f] transition-colors duration-300" />
+        <Icon className="size-3.5 text-[#8a8a8a] group-hover:text-[#f59e3f] transition-colors duration-300" />
       </div>
       <div className="flex items-end justify-between gap-3">
         <div>
@@ -251,7 +251,7 @@ function VitalCard({ label, display, score, icon: Icon, delay = 0 }: {
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center gap-2 mb-2">
-        <Icon className="size-3 text-[#666] group-hover:text-[#f59e3f] transition-colors" />
+        <Icon className="size-3 text-[#8a8a8a] group-hover:text-[#f59e3f] transition-colors" />
         <span className="text-[10px] tracking-[0.12em] uppercase text-[#999]">{label}</span>
       </div>
       <p className="text-lg font-bold tabular-nums" style={{ color }}>{display}</p>
@@ -322,7 +322,7 @@ function LoadingSkeleton({ elapsed }: { elapsed: number }) {
           <p className="text-xs text-[#888] font-mono cursor-blink max-w-xs truncate">
             &gt; {elapsed < 5 ? "connecting" : elapsed < 15 ? "rendering page" : elapsed < 25 ? "running audits" : "almost done"}...
           </p>
-          <p className="text-[10px] text-[#666] tabular-nums mt-1">{elapsed}s</p>
+          <p className="text-[10px] text-[#8a8a8a] tabular-nums mt-1">{elapsed}s</p>
         </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -355,7 +355,7 @@ function HeatLegend() {
           <span className="text-[10px] tracking-wider uppercase font-bold" style={{ color: item.color }}>
             {item.label}
           </span>
-          <span className="text-[10px] text-[#666]">{item.range}</span>
+          <span className="text-[10px] text-[#8a8a8a]">{item.range}</span>
         </div>
       ))}
     </div>
@@ -406,7 +406,7 @@ function AuditSection({ audits, icon: Icon, label }: { audits: AuditItem[]; icon
 
       {audits.length === 0 && (
         <div className="p-5 border border-[#2a2a2e] bg-[#111113] text-center">
-          <p className="text-xs text-[#666]">No audits available for this category.</p>
+          <p className="text-xs text-[#8a8a8a]">No audits available for this category.</p>
         </div>
       )}
     </div>
@@ -549,7 +549,7 @@ function ResultsView({ data }: { data: AnalysisResult }) {
 
       {/* Timestamp */}
       <div className="text-center py-3">
-        <span className="text-[10px] text-[#666] tracking-wider uppercase font-mono">
+        <span className="text-[10px] text-[#8a8a8a] tracking-wider uppercase font-mono">
           {data.engine === "lighthouse" ? "powered by google lighthouse" : "powered by site-metrics engine"} &middot; {new Date(data.timestamp).toLocaleString()}
         </span>
       </div>
@@ -671,7 +671,7 @@ export function App() {
                   placeholder="https://example.com"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  className="h-12 bg-[#0d0d0f] border border-[#3a3a3a] text-sm text-foreground placeholder:text-[#666] font-mono px-4 focus-visible:ring-0 focus-visible:border-[#f59e3f] transition-all duration-300"
+                  className="h-12 bg-[#0d0d0f] border border-[#3a3a3a] text-sm text-foreground placeholder:text-[#999] font-mono px-4 focus-visible:ring-0 focus-visible:border-[#f59e3f] transition-all duration-300"
                   disabled={loading}
                   aria-describedby="url-hint"
                 />
@@ -720,7 +720,7 @@ export function App() {
               <div className="flex items-center gap-2 text-xs text-[#888] mb-4">
                 <Flame className="size-3 text-[#f59e3f]" />
                 <span className="tracking-wider uppercase text-[#bbb]">:://engine</span>
-                <span className="text-[#777] italic ml-2">"Lighthouse-calibrated scoring."</span>
+                <span className="text-[#8a8a8a] italic ml-2">"Lighthouse-calibrated scoring."</span>
               </div>
               <Separator className="bg-[#2a2a2e] mb-4" />
               <p className="text-xs text-[#bbb] leading-relaxed">
@@ -744,7 +744,7 @@ export function App() {
                   key={item.title}
                   className="p-5 border border-[#2a2a2e] bg-[#111113] text-center group hover-glow transition-all duration-300 cursor-default"
                 >
-                  <item.icon className="size-5 mx-auto text-[#666] group-hover:text-[#f59e3f] transition-colors duration-500" />
+                  <item.icon className="size-5 mx-auto text-[#8a8a8a] group-hover:text-[#f59e3f] transition-colors duration-500" />
                   <p className="text-[10px] font-bold tracking-[0.12em] uppercase mt-3 text-foreground">{item.title}</p>
                   <p className="text-[10px] text-[#888] mt-1.5 tracking-wide">{item.desc}</p>
                 </div>
@@ -757,7 +757,7 @@ export function App() {
       {/* Footer */}
       <footer role="contentinfo" aria-label="Site footer" className="border-t border-[#1c1c1f] mt-auto">
         <div className="max-w-3xl mx-auto px-4 py-6 flex items-center justify-between">
-          <p className="text-[10px] text-[#666] tracking-wider uppercase">
+          <p className="text-[10px] text-[#8a8a8a] tracking-wider uppercase">
             &copy; 2026 SITE-METRICS
           </p>
           <p className="text-[10px] tracking-wider" aria-label="Site-Metrics logo">
