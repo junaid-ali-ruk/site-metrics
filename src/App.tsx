@@ -193,6 +193,51 @@ function DotScatter({ count = 40 }: { count?: number }) {
   );
 }
 
+// ─── Site screenshot ───
+
+function SiteScreenshot({ url }: { url: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const thumbUrl = `https://image.thum.io/get/width/800/crop/600/https://${url.replace(/^https?:\/\//, "")}`;
+
+  if (error) {
+    return (
+      <div className="w-full h-48 bg-[#111113] flex items-center justify-center">
+        <div className="text-center">
+          <Globe className="size-8 text-[#2a2a2e] mx-auto" />
+          <p className="text-[10px] text-[#8a8a8a] mt-2 tracking-wider uppercase">Preview unavailable</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full overflow-hidden bg-[#111113]" style={{ maxHeight: 340 }}>
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <div className="text-center">
+            <Loader2 className="size-5 text-[#f59e3f] mx-auto animate-spin" />
+            <p className="text-[10px] text-[#8a8a8a] mt-2 tracking-wider uppercase">Loading preview</p>
+          </div>
+        </div>
+      )}
+      <img
+        src={thumbUrl}
+        alt={`Screenshot of ${url}`}
+        className={`w-full object-cover object-top transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+        style={{ maxHeight: 340 }}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+        loading="eager"
+      />
+      {/* Gradient fade at bottom */}
+      {loaded && (
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0d0d0f] to-transparent pointer-events-none" />
+      )}
+    </div>
+  );
+}
+
 // ─── Section header ───
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
@@ -460,20 +505,25 @@ function ResultsView({ data }: { data: AnalysisResult }) {
 
   return (
     <div className="space-y-8 anim-stagger">
-      {/* Target info */}
-      <div className="p-5 border border-[#2a2a2e] bg-[#0d0d0f] relative overflow-hidden scan-line">
-        <div className="flex items-center gap-2 text-[11px] text-[#999] mb-3">
-          <Terminal className="size-3 text-[#f59e3f]" />
-          <span className="tracking-[0.2em] uppercase">Target</span>
-          <Badge variant="outline" className="text-[9px] tracking-wider uppercase border-[#3a3a3a] text-[#ccc] bg-[#1c1c1f] font-mono px-2 ml-2">
-            {data.strategy}
-          </Badge>
-          <Wifi className="size-3 text-[#6ee7b7] ml-auto animate-pulse" />
+      {/* Target hero with screenshot */}
+      <div className="border border-[#2a2a2e] bg-[#0d0d0f] relative overflow-hidden scan-line">
+        {/* Screenshot */}
+        <SiteScreenshot url={data.url} />
+        {/* Info bar */}
+        <div className="p-4 border-t border-[#2a2a2e]">
+          <div className="flex items-center gap-2 text-[11px] text-[#999] mb-2">
+            <Terminal className="size-3 text-[#f59e3f]" />
+            <span className="tracking-[0.2em] uppercase">Target</span>
+            <Badge variant="outline" className="text-[9px] tracking-wider uppercase border-[#3a3a3a] text-[#ccc] bg-[#1c1c1f] font-mono px-2 ml-2">
+              {data.strategy}
+            </Badge>
+            <Wifi className="size-3 text-[#6ee7b7] ml-auto animate-pulse" />
+          </div>
+          <p className="text-sm font-bold text-foreground truncate">
+            {data.pageInfo.title || data.url}
+          </p>
+          <p className="text-xs text-[#8a8a8a] mt-1 truncate font-mono">{data.url}</p>
         </div>
-        <p className="text-sm font-bold text-foreground truncate">
-          {data.pageInfo.title || data.url}
-        </p>
-        <p className="text-xs text-[#888] mt-1.5 truncate font-mono">{data.url}</p>
       </div>
 
       {/* Score cards */}
