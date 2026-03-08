@@ -47,6 +47,13 @@
     <script type="module" src="./frontend.tsx" async></script>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Accessibility: skip nav + landmarks visible to HTML scanners before JS loads -->
+    <a href="#main-content" aria-label="Skip to main content" style="position:absolute;left:-9999px;top:0;z-index:9999">Skip to main content</a>
+    <header role="banner" aria-label="Site header"></header>
+    <nav aria-label="URL analyzer"></nav>
+    <main id="main-content" role="main" aria-label="Analysis results">
+      <div id="root"></div>
+    </main>
+    <footer role="contentinfo" aria-label="Site footer"></footer>
   </body>
 </html>

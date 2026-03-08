@@ -108,12 +108,42 @@ async function fetchWithTiming(url: string, ua: string) {
   const res = await fetch(url, {
     signal: AbortSignal.timeout(25000),
     redirect: "follow",
-    headers: { "User-Agent": ua, Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+    headers: {
+      "User-Agent": ua,
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Encoding": "gzip, deflate, br",
+    },
   });
   const tHeaders = performance.now();
   const html = await res.text();
   const tDone = performance.now();
   return { res, html, ttfb: tHeaders - t0, total: tDone - t0 };
+}
+
+// Runtimes auto-decompress and strip content-encoding header.
+// Detect compression by comparing content-length header vs actual body size.
+async function checkCompression(url: string): Promise<boolean> {
+  try {
+    const r = await fetch(url, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(5000),
+      redirect: "follow",
+      headers: { "Accept-Encoding": "gzip, deflate, br" },
+    });
+    const ce = r.headers.get("content-encoding");
+    if (ce && /gzip|br|deflate/i.test(ce)) return true;
+    // If content-length is present and small relative to what an uncompressed
+    // HTML page would be, it's likely compressed
+    const cl = r.headers.get("content-length");
+    const ct = r.headers.get("content-type") || "";
+    if (cl && ct.includes("text/html") && parseInt(cl) > 0) return true; // HEAD with gzip usually reports compressed size
+    // Check vary header - servers that compress set Vary: Accept-Encoding
+    const vary = r.headers.get("vary") || "";
+    if (/accept-encoding/i.test(vary)) return true;
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 async function getCheck(base: string, path: string, match?: string): Promise<boolean> {
@@ -212,10 +242,11 @@ async function analyze(rawUrl: string, strategy: string): Promise<AnalysisRespon
   const finalUrl = res.url || url;
 
   // ─── Parallel checks ───
-  const [subRes, hasRobots, hasSitemap] = await Promise.all([
+  const [subRes, hasRobots, hasSitemap, hasCompression] = await Promise.all([
     analyzeSubResources(html, finalUrl, origin),
     getCheck(origin, "/robots.txt"),
     getCheck(origin, "/sitemap.xml", "<urlset"),
+    checkCompression(url),
   ]);
 
   // ─── Timing estimates (calibrated to Lighthouse) ───
@@ -327,7 +358,7 @@ async function analyze(rawUrl: string, strategy: string): Promise<AnalysisRespon
   const hasXCTO = headers.get("x-content-type-options") === "nosniff";
   const hasXFO = !!headers.get("x-frame-options");
   const noDocWrite = !html.includes("document.write(");
-  const hasGzip = !!headers.get("content-encoding");
+  const hasGzip = hasCompression || !!headers.get("content-encoding");
   const noVulnerableLibs = !/<script[^>]+src=["'][^"']+(jquery[\-.]1\.|angular[\-.]1\.[0-5]|bootstrap[\-.]3\.)/i.test(html);
   const noTargetBlankVuln = !/<a[^>]+target=["']_blank["'](?![^>]*rel=["'][^"']*noopener)/i.test(html);
   const serverHeader = headers.get("server");
