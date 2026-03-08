@@ -146,6 +146,29 @@ const outputTable = result.outputs.map(output => ({
 console.table(outputTable);
 const buildTime = (end - start).toFixed(2);
 
+// Inject preload hints for CSS and JS into the built HTML
+const htmlPath = path.join(outdir as string, "index.html");
+let builtHtml = await Bun.file(htmlPath).text();
+
+const cssFile = result.outputs.find(o => o.path.endsWith(".css"));
+const jsFile = result.outputs.find(o => o.kind === "entry-point" && o.path.endsWith(".js"));
+
+const preloadTags: string[] = [];
+if (cssFile) {
+  const name = path.basename(cssFile.path);
+  preloadTags.push(`<link rel="preload" href="./${name}" as="style">`);
+}
+if (jsFile) {
+  const name = path.basename(jsFile.path);
+  preloadTags.push(`<link rel="preload" href="./${name}" as="script" crossorigin>`);
+}
+
+if (preloadTags.length > 0) {
+  builtHtml = builtHtml.replace("</head>", `  ${preloadTags.join("\n  ")}\n</head>`);
+  await Bun.write(htmlPath, builtHtml);
+  console.log(`🔗 Injected ${preloadTags.length} preload hints`);
+}
+
 // Generate robots.txt
 const robotsTxt = `User-agent: *
 Allow: /
