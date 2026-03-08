@@ -667,7 +667,7 @@ export function App() {
                 <label htmlFor="url-input" className="sr-only">Website URL</label>
                 <Input
                   id="url-input"
-                  type="url"
+                  type="text"
                   placeholder="https://example.com"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
