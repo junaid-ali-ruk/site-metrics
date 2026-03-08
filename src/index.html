@@ -3,10 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0a0a0a" />
-    <meta name="description" content="Analyze website performance, security, and SEO metrics." />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="description" content="Analyze any website's performance, security, accessibility, and SEO with Lighthouse-calibrated scoring. Get Core Web Vitals, detailed audits, and actionable insights instantly." />
+    <meta name="author" content="Site-Metrics" />
+    <link rel="canonical" href="https://site-metrics-eight.vercel.app/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SITE-METRICS - Website Performance Analyzer" />
+    <meta property="og:description" content="Analyze any website's performance, security, accessibility, and SEO with Lighthouse-calibrated scoring." />
+    <meta property="og:url" content="https://site-metrics-eight.vercel.app/" />
+    <meta property="og:site_name" content="Site-Metrics" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="SITE-METRICS - Website Performance Analyzer" />
+    <meta name="twitter:description" content="Analyze any website's performance, security, accessibility, and SEO instantly." />
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="./frontend.tsx" as="script" crossorigin />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Site-Metrics",
+      "description": "Website performance, security, accessibility, and SEO analyzer with Lighthouse-calibrated scoring.",
+      "url": "https://site-metrics-eight.vercel.app/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>" />
-    <title>SITE-METRICS</title>
+    <title>SITE-METRICS - Website Performance Analyzer</title>
     <script type="module" src="./frontend.tsx" async></script>
   </head>
   <body>

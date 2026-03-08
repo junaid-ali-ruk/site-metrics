@@ -116,13 +116,6 @@ async function fetchWithTiming(url: string, ua: string) {
   return { res, html, ttfb: tHeaders - t0, total: tDone - t0 };
 }
 
-async function headCheck(base: string, path: string): Promise<boolean> {
-  try {
-    const r = await fetch(new URL(path, base).href, { method: "HEAD", signal: AbortSignal.timeout(5000), redirect: "follow" });
-    return r.ok;
-  } catch { return false; }
-}
-
 async function getCheck(base: string, path: string, match?: string): Promise<boolean> {
   try {
     const r = await fetch(new URL(path, base).href, { signal: AbortSignal.timeout(5000), redirect: "follow" });
@@ -248,15 +241,28 @@ async function analyze(rawUrl: string, strategy: string): Promise<AnalysisRespon
   // TTI: time to interactive. After LCP, needs JS to finish
   const estTti = estLcp + estTbt * 1.2;
 
-  // CLS: layout shift. Estimate from common anti-patterns
+  // CLS: layout shift. Estimate from common anti-patterns.
+  // Real CLS is measured by the browser during rendering. Our heuristic is conservative.
+  // Most well-built sites score 0.01-0.1. We cap per-item contribution and total.
   let estCls = 0.01; // base
   const imgTagsAll = html.match(/<img[^>]*>/gi) || [];
-  const imgsWithoutDimensions = imgTagsAll.filter(t => !(t.includes("width=") && t.includes("height="))).length;
-  estCls += imgsWithoutDimensions * 0.03;
+  const imgsWithoutDimensions = imgTagsAll.filter(t => {
+    // Check for width/height in attributes OR CSS-like sizing hints
+    const hasAttrDimensions = /width=["']\d/i.test(t) && /height=["']\d/i.test(t);
+    const hasCssDimensions = /style=["'][^"']*(width|height)/i.test(t);
+    const hasSvg = /\.svg/i.test(t);
+    const hasLazy = /loading=["']lazy/i.test(t);
+    return !hasAttrDimensions && !hasCssDimensions && !hasSvg && !hasLazy;
+  }).length;
+  // Cap image CLS contribution: max 5 images contribute, 0.008 each
+  estCls += Math.min(imgsWithoutDimensions, 5) * 0.008;
   if (!/<meta[^>]+name=["']viewport["']/i.test(html)) estCls += 0.05;
-  // Ads/embeds increase CLS
-  if (/<iframe/i.test(html)) estCls += 0.02;
-  estCls = Math.min(estCls, 0.8);
+  // Ads/embeds/iframes can cause layout shifts
+  const iframeCount = count(html, /<iframe/gi);
+  estCls += Math.min(iframeCount, 3) * 0.015;
+  // Web fonts without font-display can cause shifts
+  if (/@font-face/i.test(html) && !/font-display:\s*(swap|optional|fallback)/i.test(html)) estCls += 0.02;
+  estCls = Math.min(estCls, 0.4);
 
   // ─── Performance scoring using Lighthouse's log-normal curves ───
   // Metric     | p10 (good) | median (score=50)
@@ -291,12 +297,8 @@ async function analyze(rawUrl: string, strategy: string): Promise<AnalysisRespon
   const hasStructuredData = /<script[^>]+type=["']application\/ld\+json["']/i.test(html);
   const imgTags = html.match(/<img[^>]*>/gi) || [];
   const imgNoAlt = imgTags.filter(t => !/alt=["']/i.test(t)).length;
-  const h1Count = count(html, /<h1[\s>]/gi);
-  const hasHreflang = /<link[^>]+hreflang=/i.test(html);
   const linksCrawlable = !/<a[^>]+href=["']javascript:/i.test(html);
-  const hasMetaRobots = /<meta[^>]+name=["']robots["']/i.test(html);
   const validStatusCode = res.status >= 200 && res.status < 400;
-  const hasFontSize = hasViewport; // mobile text readability proxy
 
   const seoAudits: AuditItemData[] = [
     { title: "Document has a <title> element", score: pageTitle ? 1 : 0 },
@@ -311,7 +313,7 @@ async function analyze(rawUrl: string, strategy: string): Promise<AnalysisRespon
     { title: "Page has Open Graph tags", score: hasOG ? 1 : 0 },
     { title: "Structured data (JSON-LD) present", score: hasStructuredData ? 1 : 0.5 },
     { title: "XML Sitemap found", score: hasSitemap ? 1 : 0 },
-    { title: "Font size is legible on mobile", score: hasFontSize ? 1 : 0 },
+    { title: "Font size is legible on mobile", score: hasViewport ? 1 : 0 },
   ];
   const seoPass = seoAudits.filter(a => a.score !== null && a.score >= 0.9).length;
   const seoScore = Math.round((seoPass / seoAudits.length) * 100);
@@ -326,9 +328,7 @@ async function analyze(rawUrl: string, strategy: string): Promise<AnalysisRespon
   const hasXFO = !!headers.get("x-frame-options");
   const noDocWrite = !html.includes("document.write(");
   const hasGzip = !!headers.get("content-encoding");
-  const noConsoleLogs = true; // can't detect from server
   const noVulnerableLibs = !/<script[^>]+src=["'][^"']+(jquery[\-.]1\.|angular[\-.]1\.[0-5]|bootstrap[\-.]3\.)/i.test(html);
-  const usesPassiveListeners = true; // can't detect from server, assume true
   const noTargetBlankVuln = !/<a[^>]+target=["']_blank["'](?![^>]*rel=["'][^"']*noopener)/i.test(html);
   const serverHeader = headers.get("server");
   const noServerLeak = !serverHeader || !/\d+\.\d+/.test(serverHeader); // no version numbers
@@ -387,9 +387,6 @@ async function analyze(rawUrl: string, strategy: string): Promise<AnalysisRespon
   const hasFontDisplay = /font-display:\s*(swap|optional|fallback)/i.test(html);
   const hasPreconnect = /<link[^>]+rel=["']preconnect["']/i.test(html);
   const hasPreload = /<link[^>]+rel=["']preload["']/i.test(html);
-  const inlineStyleKB = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].reduce((s, m) => s + (m[1]?.length || 0), 0) / 1024;
-  const inlineScriptKB = [...html.matchAll(/<script(?![^>]+src=)[^>]*>([\s\S]*?)<\/script>/gi)].reduce((s, m) => s + (m[1]?.length || 0), 0) / 1024;
-
   const perfAudits: AuditItemData[] = [
     { title: "First Contentful Paint", score: fcpScore, displayValue: fmt(estFcp) },
     { title: "Largest Contentful Paint", score: lcpScore, displayValue: fmt(estLcp) },
@@ -454,17 +451,45 @@ function checkHeadingOrder(html: string): boolean {
 const server = serve({
   routes: {
     "/*": index,
+
+    "/robots.txt": new Response(
+      "User-agent: *\nAllow: /\nSitemap: https://site-metrics-eight.vercel.app/sitemap.xml\n",
+      { headers: { "Content-Type": "text/plain" } }
+    ),
+
+    "/sitemap.xml": new Response(
+      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://site-metrics-eight.vercel.app/</loc>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n</urlset>`,
+      { headers: { "Content-Type": "application/xml" } }
+    ),
+
     "/api/analyze": {
+      async GET() {
+        return Response.json({ error: "Method not allowed. Use POST." }, { status: 405 });
+      },
       async POST(req) {
+        let body: any;
         try {
-          const body = await req.json();
-          const { url, strategy = "mobile" } = body as { url: string; strategy?: string };
-          if (!url || typeof url !== "string") return Response.json({ error: "URL is required" }, { status: 400 });
+          body = await req.json();
+        } catch {
+          return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+        }
+
+        const { url, strategy = "desktop" } = body as { url: string; strategy?: string };
+
+        if (!url || typeof url !== "string" || !url.trim()) {
+          return Response.json({ error: "URL is required" }, { status: 400 });
+        }
+
+        try {
           const validStrategy = strategy === "desktop" ? "desktop" : "mobile";
           const data = await analyze(url, validStrategy);
           return Response.json(data);
         } catch (err: any) {
-          return Response.json({ error: err?.message || "Failed to analyze URL" }, { status: 500 });
+          const msg = err?.message || "Failed to analyze URL";
+          // Client-caused errors (DNS, unreachable, timeout) get 422, server bugs get 500
+          const isClientError = /connect|resolve|timeout|ENOTFOUND|unable|ECONNREFUSED|fetch failed/i.test(msg);
+          const status = isClientError ? 422 : 500;
+          return Response.json({ error: msg }, { status });
         }
       },
     },

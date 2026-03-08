@@ -146,4 +146,24 @@ const outputTable = result.outputs.map(output => ({
 console.table(outputTable);
 const buildTime = (end - start).toFixed(2);
 
+// Generate robots.txt
+const robotsTxt = `User-agent: *
+Allow: /
+Sitemap: https://site-metrics-eight.vercel.app/sitemap.xml
+`;
+await Bun.write(path.join(outdir as string, "robots.txt"), robotsTxt);
+
+// Generate sitemap.xml
+const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://site-metrics-eight.vercel.app/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`;
+await Bun.write(path.join(outdir as string, "sitemap.xml"), sitemapXml);
+
+console.log(`📝 Generated robots.txt and sitemap.xml`);
 console.log(`\n✅ Build completed in ${buildTime}ms\n`);

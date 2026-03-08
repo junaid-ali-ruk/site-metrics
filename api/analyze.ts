@@ -170,10 +170,19 @@ async function analyze(rawUrl: string, strategy: string) {
 
   let estCls = 0.01;
   const imgTagsAll = html.match(/<img[^>]*>/gi) || [];
-  estCls += imgTagsAll.filter(t => !(t.includes("width=") && t.includes("height="))).length * 0.03;
+  const imgsWithoutDimensions = imgTagsAll.filter(t => {
+    const hasAttrDimensions = /width=["']\d/i.test(t) && /height=["']\d/i.test(t);
+    const hasCssDimensions = /style=["'][^"']*(width|height)/i.test(t);
+    const hasSvg = /\.svg/i.test(t);
+    const hasLazy = /loading=["']lazy/i.test(t);
+    return !hasAttrDimensions && !hasCssDimensions && !hasSvg && !hasLazy;
+  }).length;
+  estCls += Math.min(imgsWithoutDimensions, 5) * 0.008;
   if (!/<meta[^>]+name=["']viewport["']/i.test(html)) estCls += 0.05;
-  if (/<iframe/i.test(html)) estCls += 0.02;
-  estCls = Math.min(estCls, 0.8);
+  const iframeCount = count(html, /<iframe/gi);
+  estCls += Math.min(iframeCount, 3) * 0.015;
+  if (/@font-face/i.test(html) && !/font-display:\s*(swap|optional|fallback)/i.test(html)) estCls += 0.02;
+  estCls = Math.min(estCls, 0.4);
 
   const fcpScore = lighthouseScore(estFcp, 1800, 3000);
   const lcpScore = lighthouseScore(estLcp, 2500, 4000);
@@ -331,36 +340,33 @@ async function analyze(rawUrl: string, strategy: string) {
 
 // ─── Vercel Edge Function handler ───
 
+const jsonHeaders = { "Content-Type": "application/json" };
+
 export default async function handler(req: Request) {
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify({ error: "Method not allowed. Use POST." }), { status: 405, headers: jsonHeaders });
+  }
+
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON in request body" }), { status: 400, headers: jsonHeaders });
+  }
+
+  const { url, strategy = "desktop" } = body as { url: string; strategy?: string };
+
+  if (!url || typeof url !== "string" || !url.trim()) {
+    return new Response(JSON.stringify({ error: "URL is required" }), { status: 400, headers: jsonHeaders });
   }
 
   try {
-    const body = await req.json();
-    const { url, strategy = "desktop" } = body as { url: string; strategy?: string };
-
-    if (!url || typeof url !== "string") {
-      return new Response(JSON.stringify({ error: "URL is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
     const validStrategy = strategy === "mobile" ? "mobile" : "desktop";
     const data = await analyze(url, validStrategy);
-
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(JSON.stringify(data), { status: 200, headers: jsonHeaders });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || "Failed to analyze URL" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    const msg = err?.message || "Failed to analyze URL";
+    const isClientError = /connect|resolve|timeout|ENOTFOUND|unable|ECONNREFUSED|fetch failed/i.test(msg);
+    return new Response(JSON.stringify({ error: msg }), { status: isClientError ? 422 : 500, headers: jsonHeaders });
   }
 }

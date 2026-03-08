@@ -511,8 +511,24 @@ function ResultsView({ data }: { data: AnalysisResult }) {
         </div>
       </div>
 
-      {/* Legend */}
-      <HeatLegend />
+      {/* Score summary bar */}
+      <div className="flex items-center justify-center gap-5 py-3 flex-wrap">
+        {[
+          { label: "Performance", score: data.scores.performance },
+          { label: "Accessibility", score: data.scores.accessibility },
+          { label: "Best Practices", score: data.scores.bestPractices },
+          { label: "SEO", score: data.scores.seo },
+        ].map((item) => {
+          const color = getScoreColorHex(item.score);
+          return (
+            <div key={item.label} className="flex items-center gap-2 cursor-default">
+              <div className="size-2.5" style={{ backgroundColor: color }} />
+              <span className="text-[10px] tracking-wider uppercase" style={{ color }}>{item.label}</span>
+              <span className="text-[10px] font-bold tabular-nums" style={{ color }}>{item.score}</span>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Core Web Vitals */}
       <div>
@@ -545,9 +561,11 @@ function ResultsView({ data }: { data: AnalysisResult }) {
 
 function StrategyToggle({ value, onChange }: { value: "mobile" | "desktop"; onChange: (v: "mobile" | "desktop") => void }) {
   return (
-    <div className="inline-flex border border-[#3a3a3a] overflow-hidden">
+    <div className="inline-flex border border-[#3a3a3a] overflow-hidden" role="radiogroup" aria-label="Analysis strategy">
       <button
         type="button"
+        role="radio"
+        aria-checked={value === "mobile"}
         onClick={() => onChange("mobile")}
         className={`flex items-center gap-1.5 px-3 py-2 text-[10px] tracking-wider uppercase transition-all duration-200 ${
           value === "mobile"
@@ -555,11 +573,13 @@ function StrategyToggle({ value, onChange }: { value: "mobile" | "desktop"; onCh
             : "bg-[#111113] text-[#888] hover:text-[#ccc]"
         }`}
       >
-        <Smartphone className="size-3" />
+        <Smartphone className="size-3" aria-hidden="true" />
         Mobile
       </button>
       <button
         type="button"
+        role="radio"
+        aria-checked={value === "desktop"}
         onClick={() => onChange("desktop")}
         className={`flex items-center gap-1.5 px-3 py-2 text-[10px] tracking-wider uppercase transition-all duration-200 ${
           value === "desktop"
@@ -567,7 +587,7 @@ function StrategyToggle({ value, onChange }: { value: "mobile" | "desktop"; onCh
             : "bg-[#111113] text-[#888] hover:text-[#ccc]"
         }`}
       >
-        <Monitor className="size-3" />
+        <Monitor className="size-3" aria-hidden="true" />
         Desktop
       </button>
     </div>
@@ -618,51 +638,63 @@ export function App() {
 
   return (
     <div className="min-h-screen w-full flex flex-col">
+      {/* Skip navigation */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-[#f59e3f] focus:text-[#09090b] focus:px-4 focus:py-2 focus:text-xs focus:font-bold focus:tracking-wider focus:uppercase">
+        Skip to main content
+      </a>
+
       {/* Hero */}
-      <header className="relative border-b border-[#1c1c1f] overflow-hidden">
+      <header role="banner" aria-label="Site header" className="relative border-b border-[#1c1c1f] overflow-hidden">
         <DotScatter count={60} />
-        <div className="relative max-w-3xl mx-auto px-4 pt-20 pb-14 text-center">
+        <nav aria-label="URL analyzer" className="relative max-w-3xl mx-auto px-4 pt-20 pb-14 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight anim-hero-title">
             <span className="text-foreground">SITE-</span>
             <span className="text-[#f59e3f]">METRICS</span>
-            <Flame className="inline-block size-8 text-[#f59e3f] ml-1 -mt-1 animate-pulse" />
+            <Flame className="inline-block size-8 text-[#f59e3f] ml-1 -mt-1 animate-pulse" aria-hidden="true" />
           </h1>
           <p className="mt-4 text-sm text-[#999] tracking-wide anim-hero-sub">
-            Google Lighthouse scores, instantly.
+            Lighthouse-calibrated scoring, instantly.
           </p>
 
           <div className="mt-10 max-w-xl mx-auto space-y-3 anim-hero-input">
             <form
               onSubmit={(e) => { e.preventDefault(); handleAnalyze(); }}
               className="flex gap-0"
+              role="search"
+              aria-label="Analyze a website URL"
             >
               <div className="relative flex-1">
+                <label htmlFor="url-input" className="sr-only">Website URL</label>
                 <Input
-                  type="text"
+                  id="url-input"
+                  type="url"
                   placeholder="https://example.com"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   className="h-12 bg-[#0d0d0f] border border-[#3a3a3a] text-sm text-foreground placeholder:text-[#666] font-mono px-4 focus-visible:ring-0 focus-visible:border-[#f59e3f] transition-all duration-300"
                   disabled={loading}
+                  aria-describedby="url-hint"
                 />
+                <span id="url-hint" className="sr-only">Enter a full website URL to analyze its performance</span>
               </div>
               <Button
                 type="submit"
                 disabled={loading || !url.trim()}
+                aria-label={loading ? "Analyzing website" : "Analyze website"}
                 className="h-12 px-7 bg-[#f59e3f] hover:bg-[#e08a2a] text-[#09090b] font-bold text-xs tracking-[0.2em] uppercase border-0 transition-all duration-300 hover:shadow-[0_0_20px_rgba(245,158,63,0.3)] disabled:opacity-30"
               >
-                {loading ? <Loader2 className="size-4 animate-spin" /> : "ANALYZE"}
+                {loading ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : "ANALYZE"}
               </Button>
             </form>
             <div className="flex justify-center">
               <StrategyToggle value={strategy} onChange={setStrategy} />
             </div>
           </div>
-        </div>
+        </nav>
       </header>
 
       {/* Content */}
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10">
+      <main id="main-content" role="main" aria-label="Analysis results" className="flex-1 max-w-3xl mx-auto w-full px-4 py-10">
         {loading && <LoadingSkeleton elapsed={elapsed} />}
 
         {error && (
@@ -723,12 +755,12 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#1c1c1f] mt-auto">
+      <footer role="contentinfo" aria-label="Site footer" className="border-t border-[#1c1c1f] mt-auto">
         <div className="max-w-3xl mx-auto px-4 py-6 flex items-center justify-between">
           <p className="text-[10px] text-[#666] tracking-wider uppercase">
             &copy; 2026 SITE-METRICS
           </p>
-          <p className="text-[10px] tracking-wider">
+          <p className="text-[10px] tracking-wider" aria-label="Site-Metrics logo">
             <span className="text-[#f59e3f] font-bold">SITE</span>
             <span className="text-[#999]">METRICS</span>
           </p>
