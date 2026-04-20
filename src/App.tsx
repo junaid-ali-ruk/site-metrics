@@ -527,7 +527,7 @@ function ResultsView({ data }: { data: AnalysisResult }) {
       </div>
 
       {/* Score cards */}
-      <div>
+      <div className="relative z-10">
         <SectionHeader title="SCORES" subtitle="lighthouse" />
         <DotScatter count={35} />
 
@@ -814,6 +814,14 @@ export function App() {
             <span className="text-[#f59e3f] font-bold">SITE</span>
             <span className="text-[#999]">METRICS</span>
           </p>
+          <a
+            href="https://upvote.club/?invite=23fb2b58"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] text-[#8a8a8a] hover:text-[#f59e3f] transition-colors tracking-wider"
+          >
+            Upvote Club
+          </a>
         </div>
       </footer>
     </div>
